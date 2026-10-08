@@ -73,6 +73,19 @@
 </main>
 <footer>تقبّل الله منا ومنكم صالح الأعمال 🤍</footer>
 
+<button id="sndBtn" class="fab" title="الأجواء الصوتية">🔊</button>
+<div id="sndPanel" class="snd" hidden>
+  <h3>🎧 أجواء رمضان</h3>
+  <button id="ambBtn">🌙 أجواء هادئة</button>
+  <button id="canBtn">💥 مدفع الإفطار</button>
+  <button id="adhBtn">🕌 أذان</button>
+  <button id="duaBtn">🤲 دعاء</button>
+  <label>🔉 <input type="range" id="vol" min="0" max="1" step="0.05" value="0.6"></label>
+  <label><input type="checkbox" id="sfxOn"> أصوات التفاعل الهادئة</label>
+  <label>⏰ مدفع تلقائي وقت المغرب: <input type="time" id="iftar"></label>
+  <small id="sndMsg"></small>
+</div>
+
 <dialog id="lg">
   <form method="dialog" id="lgForm">
     <h3>🔐 دخول المشرف</h3>
