@@ -75,7 +75,7 @@ function render(){
     <div class="pt">${r.pts}</div></div>`).join(''):'<div class="empty">لا توجد بيانات بعد</div>';
 }
 const go=n=>{cur=n;render()};
-const setS=(id,k)=>{if(!admin())return;const r=rec(cur,id);r.s=r.s===k?'':k;save()};
+const setS=(id,k)=>{if(!admin())return;const r=rec(cur,id);r.s=r.s===k?'':k;if(r.s)sfx(r.s);save()};
 const setB=(id,v)=>{if(!admin())return;rec(cur,id).b=+v;save()};
 const setN=(id,v)=>{if(!admin())return;rec(cur,id).n=v;store()};
 const delStu=id=>{if(admin()&&confirm('حذف الطالب وكل سجلاته؟')){S.students=S.students.filter(s=>s.id!==id);save()}};
@@ -123,3 +123,62 @@ addEventListener('online',()=>{if(admin()&&localStorage.getItem('ram-dirty'))pus
 let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;$('installBtn').style.display=''});
 $('installBtn').onclick=async()=>{if(!dp)return;dp.prompt();await dp.userChoice;dp=null;$('installBtn').style.display='none'};
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));
+
+/* ===== الأجواء الصوتية ===== */
+let AC,master,amb=null;
+function ctx(){if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=+$('vol').value;master.connect(AC.destination)}
+  if(AC.state==='suspended')AC.resume();return AC}
+function tone(f,t,d,v,dest){const c=AC,o=c.createOscillator(),g=c.createGain();o.frequency.value=f;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g);g.connect(dest||master);o.start(t);o.stop(t+d+.1)}
+function startAmb(){
+  const c=ctx();amb={nodes:[],g:c.createGain()};amb.g.gain.value=0;amb.g.connect(master);
+  amb.g.gain.linearRampToValueAtTime(.5,c.currentTime+3);
+  [73.42,110,146.83,220].forEach((f,i)=>{const o=c.createOscillator(),g=c.createGain(),l=c.createOscillator(),lg=c.createGain();
+    o.frequency.value=f;o.detune.value=i*3;g.gain.value=.12/(i+1);l.frequency.value=.05+i*.03;lg.gain.value=g.gain.value*.6;
+    l.connect(lg);lg.connect(g.gain);o.connect(g);g.connect(amb.g);o.start();l.start();amb.nodes.push(o,l)});
+  const dl=c.createDelay(2);dl.delayTime.value=.55;const fb=c.createGain();fb.gain.value=.45;dl.connect(fb);fb.connect(dl);dl.connect(amb.g);
+  const P=[293.66,329.63,369.99,440,493.88,587.33,659.25];
+  const chime=()=>{if(!amb)return;const f=P[Math.random()*P.length|0];
+    tone(f,c.currentTime,3.5,.07,amb.g);tone(f,c.currentTime,3.5,.05,dl);amb.t=setTimeout(chime,3500+Math.random()*5500)};
+  chime();
+}
+function stopAmb(){if(!amb)return;const x=amb;amb=null;clearTimeout(x.t);
+  x.g.gain.setTargetAtTime(0,AC.currentTime,.6);setTimeout(()=>x.nodes.forEach(o=>{try{o.stop()}catch{}}),3000)}
+function cannon(){
+  const c=ctx(),t=c.currentTime,n=c.createBuffer(1,c.sampleRate*2.5,c.sampleRate),d=n.getChannelData(0);
+  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);
+  const s=c.createBufferSource();s.buffer=n;const f=c.createBiquadFilter();f.type='lowpass';
+  f.frequency.setValueAtTime(900,t);f.frequency.exponentialRampToValueAtTime(80,t+1.8);
+  const g=c.createGain();g.gain.value=1.1;s.connect(f);f.connect(g);g.connect(master);s.start(t);
+  const o=c.createOscillator(),og=c.createGain();o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(30,t+.8);
+  og.gain.setValueAtTime(1,t);og.gain.exponentialRampToValueAtTime(.001,t+1.2);o.connect(og);og.connect(master);o.start(t);o.stop(t+1.3);
+  const dl=c.createDelay(1.5);dl.delayTime.value=.7;const fb=c.createGain();fb.gain.value=.35;
+  g.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(master);setTimeout(()=>{try{dl.disconnect()}catch{}},7000);
+}
+function sfx(k){
+  if(!$('sfxOn').checked)return;const c=ctx(),t=c.currentTime;
+  if(k==='p'){tone(659.25,t,.9,.12);tone(880,t+.12,1.1,.1)}
+  else if(k==='e')tone(523.25,t,1,.1);else tone(196,t,1,.1);
+}
+const files={};
+function playFile(k,btn){
+  Object.keys(files).forEach(x=>{if(x!==k){files[x].pause();$(x==='adhan'?'adhBtn':'duaBtn').classList.remove('on')}});
+  if(!files[k]){const a=new Audio('audio/'+k+'.mp3');a.onerror=()=>{$('sndMsg').textContent='ملف الصوت غير موجود: audio/'+k+'.mp3';btn.classList.remove('on')};
+    a.onended=()=>btn.classList.remove('on');files[k]=a}
+  const a=files[k];a.volume=+$('vol').value;
+  if(a.paused){$('sndMsg').textContent='';a.play().catch(()=>{});btn.classList.add('on')}else{a.pause();btn.classList.remove('on')}
+}
+$('sndBtn').onclick=()=>{$('sndPanel').hidden=!$('sndPanel').hidden};
+$('ambBtn').onclick=e=>{if(amb){stopAmb();e.target.classList.remove('on')}else{startAmb();e.target.classList.add('on')}};
+$('canBtn').onclick=cannon;
+$('adhBtn').onclick=e=>playFile('adhan',e.target);
+$('duaBtn').onclick=e=>playFile('dua',e.target);
+$('vol').oninput=e=>{if(master)master.gain.value=+e.target.value;Object.values(files).forEach(a=>a.volume=+e.target.value)};
+$('sfxOn').checked=localStorage.getItem('sfx')==='1';
+$('sfxOn').onchange=e=>localStorage.setItem('sfx',e.target.checked?'1':'0');
+$('iftar').value=localStorage.getItem('iftar')||'';
+$('iftar').onchange=e=>localStorage.setItem('iftar',e.target.value);
+setInterval(()=>{const t=localStorage.getItem('iftar');if(!t)return;
+  const n=new Date(),k=n.toDateString();
+  if(n.toTimeString().slice(0,5)===t&&localStorage.getItem('iftarDone')!==k){localStorage.setItem('iftarDone',k);cannon()}},15000);
