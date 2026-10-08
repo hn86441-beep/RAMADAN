@@ -1,4 +1,4 @@
-const DEF=()=>({start:'',students:[],days:{},cfg:{p:10,e:5,a:0,b1:1,b2:2,b3:3}});
+const DEF=()=>({start:'',students:[],days:{},cfg:{p:10,h:7,e:5,a:0,b1:1,b2:2,b3:3}});
 let S=DEF(), pw=localStorage.getItem('pw')||'', cur=1, timer;
 const $=id=>document.getElementById(id);
 const admin=()=>!!pw;
@@ -45,33 +45,32 @@ function render(){
   document.body.classList.toggle('admin',a);
   $('loginBtn').style.display=a?'none':'';
   $('start').value=S.start;
-  [['cp','p'],['ce','e'],['ca','a'],['c1','b1'],['c2','b2'],['c3','b3']].forEach(([i,k])=>{if(document.activeElement!==$(i))$(i).value=c[k]});
-  $('hint').textContent=`النقاط: حاضر ${c.p} • معتذر ${c.e} • غائب ${c.a} — السلوك: ممتاز +${c.b3} • جيد +${c.b2} • مقبول +${c.b1}`;
+  [['cp','p'],['ch','h'],['ce','e'],['ca','a'],['c1','b1'],['c2','b2'],['c3','b3']].forEach(([i,k])=>{if(document.activeElement!==$(i))$(i).value=c[k]});
+  $('hint').textContent=`النقاط: حاضر ${c.p} • نصف الدورة ${c.h} • معتذر ${c.e} • غائب ${c.a} — السلوك: ممتاز +${c.b3} • جيد +${c.b2} • مقبول +${c.b1}`;
   $('days').innerHTML=Array.from({length:30},(_,i)=>{const n=i+1,d=S.days[n];
     const done=d&&Object.values(d.rec).some(r=>r.s);
     return `<button class="${n===cur?'active ':''}${done?'done ':''}${n===t?'today':''}" onclick="go(${n})">${n}</button>`}).join('');
-  const dn=Object.values(S.days).filter(d=>d.stop&&d.stop.trim()).length;
+  const dn=Object.values(S.days).filter(d=>d.sura||(d.stop&&d.stop.trim())).length;
   $('prog').innerHTML=`<div class="bar"><i style="width:${Math.round(dn/30*100)}%"></i></div><small>📖 سُجّل موضع التوقف في ${dn} من 30 يوماً</small>`;
   $('dayTitle').textContent=`اليوم ${cur} من رمضان`;
   $('juz').textContent=`الجزء ${cur}`;
-  $('stop').disabled=!a;
-  if(document.activeElement!==$('stop'))$('stop').value=day(cur).stop;
+  renderStop();
   $('list').innerHTML=S.students.length?S.students.map(s=>{const r=rec(cur,s.id);
     return `<div class="stu"><div class="top"><span>${esc(s.name)}</span><span class="adm"><button class="ren" onclick="renStu('${s.id}')">✏</button><button class="del" onclick="delStu('${s.id}')">🗑</button></span></div>
-    <div class="st">${[['p','حاضر'],['e','معتذر'],['a','غائب']].map(([k,l])=>`<button class="${k}${r.s===k?' on':''}" onclick="setS('${s.id}','${k}')">${l}</button>`).join('')}</div>
+    <div class="st">${[['p','حاضر'],['h','نصف الدورة'],['e','معتذر'],['a','غائب']].map(([k,l])=>`<button class="${k}${r.s===k?' on':''}" onclick="setS('${s.id}','${k}')">${l}</button>`).join('')}</div>
     <div class="row"><select ${dis} onchange="setB('${s.id}',this.value)">${BEH.map((b,i)=>`<option value="${i}"${r.b==i?' selected':''}>${i?'السلوك: '+b:'السلوك: '+b}</option>`).join('')}</select>
     <input ${dis} placeholder="ملاحظة..." value="${esc(r.n)}" oninput="setN('${s.id}',this.value)"></div></div>`}).join('')
     :'<div class="empty">لم تُضف أسماء بعد ✨</div>';
-  const k={p:0,e:0,a:0};S.students.forEach(s=>{const r=rec(cur,s.id);if(r.s)k[r.s]++});
-  $('summary').innerHTML=`<span>✅ ${k.p}</span><span>🟡 ${k.e}</span><span>❌ ${k.a}</span>`;
+  const k={p:0,h:0,e:0,a:0};S.students.forEach(s=>{const r=rec(cur,s.id);if(r.s)k[r.s]++});
+  $('summary').innerHTML=`<span>✅ ${k.p}</span><span>🔷 ${k.h}</span><span>🟡 ${k.e}</span><span>❌ ${k.a}</span>`;
   const bp=[0,c.b1,c.b2,c.b3];
-  const rows=S.students.map(s=>{let p=0,e=0,a=0,pts=0,bs=0,bn=0,run=0;
+  const rows=S.students.map(s=>{let p=0,h=0,e=0,a=0,pts=0,bs=0,bn=0,run=0;
     for(let n=1;n<=30;n++){const r=S.days[n]&&S.days[n].rec[s.id];if(!r||!r.s)continue;
-      if(r.s==='p'){p++;pts+=+c.p}else if(r.s==='e'){e++;pts+=+c.e}else{a++;pts+=+c.a}
+      if(r.s==='p'){p++;pts+=+c.p}else if(r.s==='h'){h++;pts+=+c.h}else if(r.s==='e'){e++;pts+=+c.e}else{a++;pts+=+c.a}
       pts+=+bp[r.b||0];if(r.b){bs+=r.b;bn++}run=r.s==='p'?run+1:0}
-    const tot=p+e+a;return{name:s.name,p,e,a,pts,pct:tot?Math.round(p/tot*100):0,run,bn,bavg:bn?bs/bn:0}}).sort((x,y)=>y.pts-x.pts);
+    const tot=p+h+e+a;return{name:s.name,p,h,e,a,pts,pct:tot?Math.round((p+h/2)/tot*100):0,run,bn,bavg:bn?bs/bn:0}}).sort((x,y)=>y.pts-x.pts);
   $('rank').innerHTML=rows.length?rows.map((r,i)=>`<div class="r"><div class="n">${['🥇','🥈','🥉'][i]||i+1}</div>
-    <div class="nm">${esc(r.name)}${r.pct===100&&r.p>=3?'<span class="tag">🏅 ملتزم</span>':''}${r.bn>=3&&r.bavg>=2.5?'<span class="tag">⭐ سلوك مميز</span>':''}${r.run>=3?'<span class="tag">🔥 '+r.run+'</span>':''}<small>حضور ${r.p} • اعتذار ${r.e} • غياب ${r.a} — نسبة الحضور ${r.pct}%</small><div class="bar"><i style="width:${r.pct}%"></i></div></div>
+    <div class="nm">${esc(r.name)}${r.pct===100&&r.p>=3?'<span class="tag">🏅 ملتزم</span>':''}${r.bn>=3&&r.bavg>=2.5?'<span class="tag">⭐ سلوك مميز</span>':''}${r.run>=3?'<span class="tag">🔥 '+r.run+'</span>':''}<small>حضور ${r.p} • نصف الدورة ${r.h} • اعتذار ${r.e} • غياب ${r.a} — نسبة الحضور ${r.pct}%</small><div class="bar"><i style="width:${r.pct}%"></i></div></div>
     <div class="pt">${r.pts}</div></div>`).join(''):'<div class="empty">لا توجد بيانات بعد</div>';
 }
 const go=n=>{cur=n;render()};
@@ -84,9 +83,8 @@ function add(){const v=$('newName').value.trim();if(!v||!admin())return;
   S.students.push({id:'s'+Date.now(),name:v});$('newName').value='';save()}
 $('addBtn').onclick=add;
 $('newName').onkeydown=e=>{if(e.key==='Enter')add()};
-$('stop').oninput=e=>{day(cur).stop=e.target.value;store()};
 $('start').onchange=e=>{S.start=e.target.value;const t=todayNo();if(t)cur=t;save()};
-[['cp','p'],['ce','e'],['ca','a'],['c1','b1'],['c2','b2'],['c3','b3']].forEach(([i,k])=>{$(i).oninput=e=>{S.cfg[k]=+e.target.value||0;save()}});
+[['cp','p'],['ch','h'],['ce','e'],['ca','a'],['c1','b1'],['c2','b2'],['c3','b3']].forEach(([i,k])=>{$(i).oninput=e=>{S.cfg[k]=+e.target.value||0;save()}});
 $('exp').onclick=()=>{const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));
   a.download='quran-ramadan-backup.json';a.click()};
@@ -112,10 +110,10 @@ $('pw').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doLogin()}};
 
 $('allP').onclick=()=>{if(!admin())return;S.students.forEach(s=>{const r=rec(cur,s.id);if(!r.s)r.s='p'});save()};
 function report(){
-  const g={p:[],e:[],a:[]};S.students.forEach(s=>{const r=rec(cur,s.id);if(r.s)g[r.s].push(s.name)});
+  const g={p:[],h:[],e:[],a:[]};S.students.forEach(s=>{const r=rec(cur,s.id);if(r.s)g[r.s].push(s.name)});
   const L=[`🌙 ختمة رمضان — اليوم ${cur} (الجزء ${cur})`];
-  if(day(cur).stop)L.push('📖 توقفنا عند: '+day(cur).stop);
-  L.push('',`✅ الحاضرون (${g.p.length}): ${g.p.join('، ')||'-'}`,`🟡 المعتذرون (${g.e.length}): ${g.e.join('، ')||'-'}`,`❌ الغائبون (${g.a.length}): ${g.a.join('، ')||'-'}`);
+  if(stopText(cur))L.push('📖 توقفنا عند: '+stopText(cur));
+  L.push('',`✅ الحاضرون (${g.p.length}): ${g.p.join('، ')||'-'}`,`🔷 حضروا نصف الدورة (${g.h.length}): ${g.h.join('، ')||'-'}`,`🟡 المعتذرون (${g.e.length}): ${g.e.join('، ')||'-'}`,`❌ الغائبون (${g.a.length}): ${g.a.join('، ')||'-'}`);
   return L.join('\n');
 }
 $('wa').onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent(report()),'_blank');
@@ -159,7 +157,7 @@ function cannon(){
 function sfx(k){
   if(!$('sfxOn').checked)return;const c=ctx(),t=c.currentTime;
   if(k==='p'){tone(659.25,t,.9,.12);tone(880,t+.12,1.1,.1)}
-  else if(k==='e')tone(523.25,t,1,.1);else tone(196,t,1,.1);
+  else if(k==='e'||k==='h')tone(523.25,t,1,.1);else tone(196,t,1,.1);
 }
 const files={};
 function playFile(k,btn){
@@ -182,3 +180,36 @@ $('iftar').onchange=e=>localStorage.setItem('iftar',e.target.value);
 setInterval(()=>{const t=localStorage.getItem('iftar');if(!t)return;
   const n=new Date(),k=n.toDateString();
   if(n.toTimeString().slice(0,5)===t&&localStorage.getItem('iftarDone')!==k){localStorage.setItem('iftarDone',k);cannon()}},15000);
+
+/* ===== اختيار موضع التوقف بالأزرار ===== */
+const SU=('الفاتحة:7:1,البقرة:286:2,آل عمران:200:50,النساء:176:77,المائدة:120:106,الأنعام:165:128,الأعراف:206:151,الأنفال:75:177,التوبة:129:187,يونس:109:208,هود:123:221,يوسف:111:235,الرعد:43:249,إبراهيم:52:255,الحجر:99:262,النحل:128:267,الإسراء:111:282,الكهف:110:293,مريم:98:305,طه:135:312,الأنبياء:112:322,الحج:78:332,المؤمنون:118:342,النور:64:350,الفرقان:77:359,الشعراء:227:367,النمل:93:377,القصص:88:385,العنكبوت:69:396,الروم:60:404,لقمان:34:411,السجدة:30:415,الأحزاب:73:418,سبأ:54:428,فاطر:45:434,يس:83:440,الصافات:182:446,ص:88:453,الزمر:75:458,غافر:85:467,فصلت:54:477,الشورى:53:483,الزخرف:89:489,الدخان:59:496,الجاثية:37:499,الأحقاف:35:502,محمد:38:507,الفتح:29:511,الحجرات:18:515,ق:45:518,الذاريات:60:520,الطور:49:523,النجم:62:526,القمر:55:528,الرحمن:78:531,الواقعة:96:534,الحديد:29:537,المجادلة:22:542,الحشر:24:545,الممتحنة:13:549,الصف:14:551,الجمعة:11:553,المنافقون:11:554,التغابن:18:556,الطلاق:12:558,التحريم:12:560,الملك:30:562,القلم:52:564,الحاقة:52:566,المعارج:44:568,نوح:28:570,الجن:28:572,المزمل:20:574,المدثر:56:575,القيامة:40:577,الإنسان:31:578,المرسلات:50:580,النبأ:40:582,النازعات:46:583,عبس:42:585,التكوير:29:586,الانفطار:19:587,المطففين:36:587,الانشقاق:25:589,البروج:22:590,الطارق:17:591,الأعلى:19:591,الغاشية:26:592,الفجر:30:593,البلد:20:594,الشمس:15:595,الليل:21:595,الضحى:11:596,الشرح:8:596,التين:8:597,العلق:19:597,القدر:5:598,البينة:8:598,الزلزلة:8:599,العاديات:11:599,القارعة:11:600,التكاثر:8:600,العصر:3:601,الهمزة:9:601,الفيل:5:602,قريش:4:602,الماعون:7:602,الكوثر:3:603,الكافرون:6:603,النصر:3:603,المسد:5:603,الإخلاص:4:604,الفلق:5:604,الناس:6:604').split(',').map(x=>{const[n,c,p]=x.split(':');return[n,+c,+p]});
+const juzStart=n=>n<=1?1:20*(n-1)+2;
+function stopText(n){const d=day(n);
+  if(d.sura)return `سورة ${SU[d.sura-1][0]} • الآية ${d.aya||1} • صفحة ${d.pg||SU[d.sura-1][2]}`;
+  return d.stop||''}
+function renderStop(){
+  const d=day(cur),sel=$('sura');
+  if(!sel.options.length)sel.innerHTML='<option value="0">— اختر السورة —</option>'+SU.map((s,i)=>`<option value="${i+1}">${i+1}. ${s[0]}</option>`).join('');
+  sel.value=d.sura||0;
+  $('aya').value=d.aya||'';$('aya').max=d.sura?SU[d.sura-1][1]:'';
+  $('ayaMax').textContent=d.sura?`(من ${SU[d.sura-1][1]})`:'';
+  $('pg').value=d.pg||'';$('pgR').value=d.pg||juzStart(cur);
+  $('stopTxt').textContent=stopText(cur)||'لم يُحدَّد موضع التوقف بعد';
+  let p='';for(let m=cur-1;m>=1;m--)if(S.days[m]&&(S.days[m].sura||S.days[m].stop)){p=stopText(m);break}
+  $('stopFrom').textContent=p?`▶ بدأنا اليوم من: ${p}`:`📍 الجزء ${cur} يبدأ من صفحة ${juzStart(cur)}`;
+}
+const upd=f=>{if(!admin())return;f(day(cur));save()};
+const clamp=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
+const setSura=(d,i)=>{d.sura=i;if(i){d.aya=1;d.pg=SU[i-1][2]}else{d.aya=0;d.pg=0}};
+$('sura').onchange=e=>upd(d=>setSura(d,+e.target.value));
+$('suP').onclick=()=>upd(d=>setSura(d,clamp((d.sura||1)-1,1,114)));
+$('suN').onclick=()=>upd(d=>setSura(d,clamp((d.sura||0)+1,1,114)));
+const ayStep=x=>upd(d=>{if(!d.sura)return;d.aya=clamp((d.aya||1)+x,1,SU[d.sura-1][1])});
+$('ay-10').onclick=()=>ayStep(-10);$('ay-1').onclick=()=>ayStep(-1);$('ay1').onclick=()=>ayStep(1);$('ay10').onclick=()=>ayStep(10);
+$('aya').onchange=e=>upd(d=>{if(d.sura)d.aya=clamp(+e.target.value||1,1,SU[d.sura-1][1])});
+const pgStep=x=>upd(d=>{d.pg=clamp((d.pg||juzStart(cur))+x,1,604)});
+$('pg-1').onclick=()=>pgStep(-1);$('pg1').onclick=()=>pgStep(1);
+$('pg').onchange=e=>upd(d=>{d.pg=clamp(+e.target.value||1,1,604)});
+$('pgR').oninput=e=>upd(d=>{d.pg=+e.target.value});
+$('jStart').onclick=()=>upd(d=>{d.pg=juzStart(cur)});
+$('jEnd').onclick=()=>upd(d=>{d.pg=cur>=30?604:juzStart(cur+1)-1});
