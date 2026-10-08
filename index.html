@@ -32,9 +32,21 @@
       <h2 id="dayTitle"></h2>
       <span id="juz" class="badge"></span>
     </div>
-    <label class="stop">📖 موضع التوقف:
-      <input id="stop" placeholder="مثال: سورة البقرة - آية 142 - صفحة 22">
-    </label>
+    <div class="stopbox">
+      <div class="stoplabel">📖 موضع التوقف</div>
+      <div id="stopTxt" class="stoptxt"></div>
+      <small id="stopFrom" class="stopfrom"></small>
+      <div class="pick adm">
+        <div class="pk"><span>السورة</span>
+          <div class="stp"><button id="suP">›</button><select id="sura"></select><button id="suN">‹</button></div></div>
+        <div class="pk"><span>الآية <small id="ayaMax"></small></span>
+          <div class="stp"><button id="ay-10">−10</button><button id="ay-1">−</button><input type="number" id="aya" min="1"><button id="ay1">+</button><button id="ay10">+10</button></div></div>
+        <div class="pk"><span>الصفحة</span>
+          <div class="stp"><button id="pg-1">−</button><input type="number" id="pg" min="1" max="604"><button id="pg1">+</button></div>
+          <input type="range" id="pgR" min="1" max="604"></div>
+        <div class="stp quick"><button id="jStart">📍 بداية الجزء</button><button id="jEnd">🏁 أكملنا الجزء</button></div>
+      </div>
+    </div>
     <div class="add adm">
       <input id="newName" placeholder="اكتب اسم الطالب ثم اضغط إضافة">
       <button class="gold" id="addBtn">+ إضافة</button>
@@ -56,6 +68,7 @@
     <p class="hint">نقاط التقييم:</p>
     <div class="cfg">
       <label>حاضر <input type="number" id="cp"></label>
+      <label>نصف الدورة <input type="number" id="ch"></label>
       <label>معتذر <input type="number" id="ce"></label>
       <label>غائب <input type="number" id="ca"></label>
       <label>سلوك مقبول <input type="number" id="c1"></label>
