@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ختمة رمضان</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="topbar"><span id="status"></span><button id="loginBtn">🔐 دخول المشرف</button></div>
+  <div class="moon">☪</div>
+  <h1>ختمة رمضان</h1>
+  <p class="verse">﴿ شَهْرُ رَمَضَانَ الَّذِي أُنزِلَ فِيهِ الْقُرْآنُ ﴾</p>
+</header>
+
+<main>
+  <section class="card">
+    <h2>🌙 أيام رمضان</h2>
+    <div id="days" class="days"></div>
+    <div class="legend"><span class="dot done"></span> تم التسجيل <span class="dot today"></span> اليوم</div>
+  </section>
+
+  <section class="card">
+    <div class="dayhead">
+      <h2 id="dayTitle"></h2>
+      <span id="juz" class="badge"></span>
+    </div>
+    <label class="stop">📖 موضع التوقف:
+      <input id="stop" placeholder="مثال: سورة البقرة - آية 142 - صفحة 22">
+    </label>
+    <div class="add adm">
+      <input id="newName" placeholder="اكتب اسم الطالب ثم اضغط إضافة">
+      <button class="gold" id="addBtn">+ إضافة</button>
+    </div>
+    <div id="list"></div>
+    <div id="summary" class="summary"></div>
+  </section>
+
+  <section class="card">
+    <h2>🏆 ترتيب الحضور والسلوك</h2>
+    <p class="hint" id="hint"></p>
+    <div id="rank"></div>
+  </section>
+
+  <section class="card adm" id="panel">
+    <h2>⚙ لوحة التحكم</h2>
+    <label class="fld">أول يوم في رمضان: <input type="date" id="start"></label>
+    <p class="hint">نقاط التقييم:</p>
+    <div class="cfg">
+      <label>حاضر <input type="number" id="cp"></label>
+      <label>معتذر <input type="number" id="ce"></label>
+      <label>غائب <input type="number" id="ca"></label>
+      <label>سلوك مقبول <input type="number" id="c1"></label>
+      <label>سلوك جيد <input type="number" id="c2"></label>
+      <label>سلوك ممتاز <input type="number" id="c3"></label>
+    </div>
+    <div class="tools">
+      <button id="exp">⬇ نسخة احتياطية</button>
+      <label class="btn">⬆ استرجاع<input type="file" id="imp" accept=".json" hidden></label>
+      <button onclick="print()">🖨 طباعة</button>
+      <button class="danger" id="reset">🗑 تصفير كل البيانات</button>
+      <button id="logout">🚪 خروج</button>
+    </div>
+  </section>
+</main>
+<footer>تقبّل الله منا ومنكم صالح الأعمال 🤍</footer>
+
+<dialog id="lg">
+  <form method="dialog" id="lgForm">
+    <h3>🔐 دخول المشرف</h3>
+    <input type="password" id="pw" placeholder="كلمة السر" autocomplete="current-password">
+    <p id="lgErr" class="err"></p>
+    <div class="row"><button class="gold" id="lgOk" type="button">دخول</button><button type="button" id="lgCancel">إلغاء</button></div>
+  </form>
+</dialog>
+<script src="app.js"></script>
+</body>
+</html>
