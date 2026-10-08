@@ -1,12 +1,18 @@
-// Vercel Serverless Function: يحفظ ويقرأ بيانات الموقع من قاعدة Upstash Redis
 const crypto = require('crypto');
-const DB_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-const DB_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+const find = re => {
+  const k = Object.keys(process.env).find(k => re.test(k) && !/READ_ONLY/.test(k));
+  return k ? process.env[k] : undefined;
+};
+const DB_URL = find(/REST(_API)?_URL$/);
+const DB_TOKEN = find(/REST(_API)?_TOKEN$/);
 const KEY = 'ramadan-data';
 const hash = s => crypto.createHash('sha256').update(String(s || '')).digest();
 const redis = async cmd => {
+  if (!DB_URL || !DB_TOKEN) throw new Error('متغيرات قاعدة البيانات غير موجودة في Vercel');
   const r = await fetch(DB_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + DB_TOKEN }, body: JSON.stringify(cmd) });
-  return (await r.json()).result;
+  const j = await r.json();
+  if (j.error) throw new Error(j.error);
+  return j.result;
 };
 const isAdmin = req => !!process.env.ADMIN_PASSWORD &&
   crypto.timingSafeEqual(hash(req.headers['x-admin-password']), hash(process.env.ADMIN_PASSWORD));
@@ -30,6 +36,6 @@ module.exports = async (req, res) => {
     }
     res.status(405).end();
   } catch (e) {
-    res.status(500).json({ error: 'server error' });
+    res.status(500).json({ error: e.message });
   }
 };
