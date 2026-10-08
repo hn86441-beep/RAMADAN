@@ -63,3 +63,11 @@ input:disabled,select:disabled{opacity:.85;cursor:default}
 body:not(.admin) .st button{pointer-events:none}
 .prog{margin-top:12px;text-align:center}.prog small{opacity:.8;font-size:13px;display:block;margin-top:6px}
 .tag{display:inline-block;font-size:11px;background:#e0b84c22;color:var(--gold);border:1px solid #e0b84c66;border-radius:10px;padding:1px 7px;margin-right:6px;font-weight:600}
+
+.fab{position:fixed;bottom:18px;left:18px;width:52px;height:52px;border-radius:50%;background:var(--gold);color:#07241f;font-size:22px;padding:0;box-shadow:0 4px 18px #000a;z-index:20}
+.snd{position:fixed;bottom:80px;left:18px;width:min(290px,calc(100vw - 36px));background:var(--card);border:1px solid var(--gold);border-radius:16px;padding:14px;z-index:20;display:grid;gap:8px;box-shadow:0 8px 30px #000a}
+.snd[hidden]{display:none}.snd h3{margin:0;color:var(--gold)}
+.snd label{font-size:13px;display:block}.snd input[type=range]{width:80%;vertical-align:middle;padding:0}
+.snd button.on{background:var(--gold);color:#07241f;font-weight:700}
+.snd small{color:#ff9d95;min-height:16px}
+@media print{.fab,.snd{display:none}}
