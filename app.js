@@ -1,5 +1,5 @@
 const DEF=()=>({start:'',students:[],days:{},cfg:{p:10,e:5,a:0,b1:1,b2:2,b3:3}});
-let S=DEF(), pw=sessionStorage.getItem('pw')||'', cur=1, timer;
+let S=DEF(), pw=localStorage.getItem('pw')||'', cur=1, timer;
 const $=id=>document.getElementById(id);
 const admin=()=>!!pw;
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -9,30 +9,36 @@ const todayNo=()=>{if(!S.start)return 0;const d=Math.floor((new Date()-new Date(
 const BEH=['لم يُقيَّم','مقبول','جيد','ممتاز'];
 const status=t=>$('status').textContent=t;
 
+function merge(d){return{...DEF(),...d,cfg:{...DEF().cfg,...d.cfg}}}
 function store(){
   if(!admin())return;
+  localStorage.setItem('ram-cache',JSON.stringify(S));localStorage.setItem('ram-dirty','1');
   clearTimeout(timer);status('… جارٍ الحفظ');
-  timer=setTimeout(async()=>{
-    try{
-      const r=await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json','x-admin-password':pw},body:JSON.stringify(S)});
-      if(r.status===401){logout();return}
-      status(r.ok?'✔ تم الحفظ':'⚠ فشل الحفظ');
-    }catch{status('⚠ فشل الحفظ')}
-  },500);
+  timer=setTimeout(push,500);
+}
+async function push(){
+  try{
+    const r=await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json','x-admin-password':pw},body:JSON.stringify(S)});
+    if(r.status===401){logout();return}
+    if(r.ok){localStorage.removeItem('ram-dirty');status('✔ تم الحفظ')}else status('⚠ فشل الحفظ — محفوظ على الجهاز');
+  }catch{status('📴 محفوظ على الجهاز وسيُرفع عند عودة الاتصال')}
 }
 const save=()=>{store();render()};
-
 async function load(){
+  const cache=localStorage.getItem('ram-cache');
+  if(admin()&&localStorage.getItem('ram-dirty')&&cache){S=merge(JSON.parse(cache));render();push();return}
   try{
-    const d=await (await fetch('/api/data')).json();
-    if(d)S={...DEF(),...d,cfg:{...DEF().cfg,...d.cfg}};
-  }catch{status('⚠ تعذر الاتصال بالخادم')}
+    const r=await fetch('/api/data');if(!r.ok)throw 0;
+    const d=await r.json();
+    if(d){S=merge(d);localStorage.setItem('ram-cache',JSON.stringify(S))}
+    status('');
+  }catch{if(cache)S=merge(JSON.parse(cache));status('📴 وضع عدم الاتصال')}
   render();
 }
 async function verify(){
   if(!pw)return;
-  const r=await fetch('/api/data?check=1',{headers:{'x-admin-password':pw}});
-  if(!r.ok){pw='';sessionStorage.removeItem('pw')}
+  try{const r=await fetch('/api/data?check=1',{headers:{'x-admin-password':pw}});
+    if(r.status===401){pw='';localStorage.removeItem('pw')}}catch{}
 }
 function render(){
   const a=admin(),dis=a?'':'disabled',t=todayNo(),c=S.cfg;
@@ -44,6 +50,8 @@ function render(){
   $('days').innerHTML=Array.from({length:30},(_,i)=>{const n=i+1,d=S.days[n];
     const done=d&&Object.values(d.rec).some(r=>r.s);
     return `<button class="${n===cur?'active ':''}${done?'done ':''}${n===t?'today':''}" onclick="go(${n})">${n}</button>`}).join('');
+  const dn=Object.values(S.days).filter(d=>d.stop&&d.stop.trim()).length;
+  $('prog').innerHTML=`<div class="bar"><i style="width:${Math.round(dn/30*100)}%"></i></div><small>📖 سُجّل موضع التوقف في ${dn} من 30 يوماً</small>`;
   $('dayTitle').textContent=`اليوم ${cur} من رمضان`;
   $('juz').textContent=`الجزء ${cur}`;
   $('stop').disabled=!a;
@@ -57,13 +65,13 @@ function render(){
   const k={p:0,e:0,a:0};S.students.forEach(s=>{const r=rec(cur,s.id);if(r.s)k[r.s]++});
   $('summary').innerHTML=`<span>✅ ${k.p}</span><span>🟡 ${k.e}</span><span>❌ ${k.a}</span>`;
   const bp=[0,c.b1,c.b2,c.b3];
-  const rows=S.students.map(s=>{let p=0,e=0,a=0,pts=0;
+  const rows=S.students.map(s=>{let p=0,e=0,a=0,pts=0,bs=0,bn=0,run=0;
     for(let n=1;n<=30;n++){const r=S.days[n]&&S.days[n].rec[s.id];if(!r||!r.s)continue;
       if(r.s==='p'){p++;pts+=+c.p}else if(r.s==='e'){e++;pts+=+c.e}else{a++;pts+=+c.a}
-      pts+=+bp[r.b||0]}
-    const tot=p+e+a;return{name:s.name,p,e,a,pts,pct:tot?Math.round(p/tot*100):0}}).sort((x,y)=>y.pts-x.pts);
+      pts+=+bp[r.b||0];if(r.b){bs+=r.b;bn++}run=r.s==='p'?run+1:0}
+    const tot=p+e+a;return{name:s.name,p,e,a,pts,pct:tot?Math.round(p/tot*100):0,run,bn,bavg:bn?bs/bn:0}}).sort((x,y)=>y.pts-x.pts);
   $('rank').innerHTML=rows.length?rows.map((r,i)=>`<div class="r"><div class="n">${['🥇','🥈','🥉'][i]||i+1}</div>
-    <div class="nm">${esc(r.name)}<small>حضور ${r.p} • اعتذار ${r.e} • غياب ${r.a} — نسبة الحضور ${r.pct}%</small><div class="bar"><i style="width:${r.pct}%"></i></div></div>
+    <div class="nm">${esc(r.name)}${r.pct===100&&r.p>=3?'<span class="tag">🏅 ملتزم</span>':''}${r.bn>=3&&r.bavg>=2.5?'<span class="tag">⭐ سلوك مميز</span>':''}${r.run>=3?'<span class="tag">🔥 '+r.run+'</span>':''}<small>حضور ${r.p} • اعتذار ${r.e} • غياب ${r.a} — نسبة الحضور ${r.pct}%</small><div class="bar"><i style="width:${r.pct}%"></i></div></div>
     <div class="pt">${r.pts}</div></div>`).join(''):'<div class="empty">لا توجد بيانات بعد</div>';
 }
 const go=n=>{cur=n;render()};
@@ -85,17 +93,33 @@ $('exp').onclick=()=>{const a=document.createElement('a');
 $('imp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{S={...DEF(),...JSON.parse(r.result)};save()}catch{alert('ملف غير صالح')}};r.readAsText(f)};
 $('reset').onclick=()=>{if(confirm('سيتم حذف كل البيانات نهائياً. هل أنت متأكد؟')&&confirm('تأكيد أخير: حذف كل شيء؟')){S=DEF();save()}};
-function logout(){pw='';sessionStorage.removeItem('pw');status('');render()}
+function logout(){pw='';localStorage.removeItem('pw');status('');render()}
 $('logout').onclick=logout;
 $('loginBtn').onclick=()=>{$('pw').value='';$('lgErr').textContent='';$('lg').showModal();$('pw').focus()};
 $('lgCancel').onclick=()=>$('lg').close();
 async function doLogin(){
   const v=$('pw').value;if(!v)return;
+  try{
   const r=await fetch('/api/data?check=1',{headers:{'x-admin-password':v}});
-  if(r.ok){pw=v;sessionStorage.setItem('pw',v);$('lg').close();render()}
+  if(r.ok){pw=v;localStorage.setItem('pw',v);$('lg').close();render()}
   else $('lgErr').textContent='كلمة السر غير صحيحة';
+  }catch{$('lgErr').textContent='يلزم اتصال بالإنترنت لأول دخول'}
 }
 $('lgOk').onclick=doLogin;
 $('pw').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doLogin()}};
 (async()=>{await verify();await load();if(todayNo()){cur=todayNo();render()}
   setInterval(()=>{if(!admin())load()},60000)})();
+
+$('allP').onclick=()=>{if(!admin())return;S.students.forEach(s=>{const r=rec(cur,s.id);if(!r.s)r.s='p'});save()};
+function report(){
+  const g={p:[],e:[],a:[]};S.students.forEach(s=>{const r=rec(cur,s.id);if(r.s)g[r.s].push(s.name)});
+  const L=[`🌙 ختمة رمضان — اليوم ${cur} (الجزء ${cur})`];
+  if(day(cur).stop)L.push('📖 توقفنا عند: '+day(cur).stop);
+  L.push('',`✅ الحاضرون (${g.p.length}): ${g.p.join('، ')||'-'}`,`🟡 المعتذرون (${g.e.length}): ${g.e.join('، ')||'-'}`,`❌ الغائبون (${g.a.length}): ${g.a.join('، ')||'-'}`);
+  return L.join('\n');
+}
+$('wa').onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent(report()),'_blank');
+addEventListener('online',()=>{if(admin()&&localStorage.getItem('ram-dirty'))push();else load()});
+let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;$('installBtn').style.display=''});
+$('installBtn').onclick=async()=>{if(!dp)return;dp.prompt();await dp.userChoice;dp=null;$('installBtn').style.display='none'};
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));
