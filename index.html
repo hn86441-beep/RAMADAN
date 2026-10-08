@@ -6,11 +6,14 @@
 <title>ختمة رمضان</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#07241f">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header>
-  <div class="topbar"><span id="status"></span><button id="loginBtn">🔐 دخول المشرف</button></div>
+  <div class="topbar"><span id="status"></span><span><button id="installBtn" style="display:none">📲 تثبيت</button> <button id="loginBtn">🔐 دخول المشرف</button></span></div>
   <div class="moon">☪</div>
   <h1>ختمة رمضان</h1>
   <p class="verse">﴿ شَهْرُ رَمَضَانَ الَّذِي أُنزِلَ فِيهِ الْقُرْآنُ ﴾</p>
@@ -20,6 +23,7 @@
   <section class="card">
     <h2>🌙 أيام رمضان</h2>
     <div id="days" class="days"></div>
+    <div id="prog" class="prog"></div>
     <div class="legend"><span class="dot done"></span> تم التسجيل <span class="dot today"></span> اليوم</div>
   </section>
 
@@ -37,6 +41,7 @@
     </div>
     <div id="list"></div>
     <div id="summary" class="summary"></div>
+    <div class="summary"><button class="adm" id="allP">✅ تحضير الكل</button><button id="wa">📲 تقرير اليوم</button></div>
   </section>
 
   <section class="card">
