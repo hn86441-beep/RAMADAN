@@ -2,17 +2,18 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ختمة رمضان</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#07241f">
+<meta name="theme-color" content="#04201b">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header>
+  <div class="lanterns"><span>🏮</span><span>🏮</span></div>
   <div class="topbar"><span id="status"></span><span><button id="installBtn" style="display:none">📲 تثبيت</button> <button id="loginBtn">🔐 دخول المشرف</button></span></div>
   <div class="moon">☪</div>
   <h1>ختمة رمضان</h1>
@@ -20,71 +21,96 @@
 </header>
 
 <main>
-  <section class="card">
-    <h2>🌙 أيام رمضان</h2>
-    <div id="days" class="days"></div>
-    <div id="prog" class="prog"></div>
-    <div class="legend"><span class="dot done"></span> تم التسجيل <span class="dot today"></span> اليوم</div>
+  <div id="pv" class="card"></div>
+
+  <section class="tabsec" data-t="day">
+    <div id="alerts" class="alerts adm" hidden></div>
+    <div class="card">
+      <h2>🌙 أيام رمضان</h2>
+      <div id="days" class="days"></div>
+      <div id="prog" class="prog"></div>
+      <div class="legend"><span class="dot done"></span> تم التسجيل <span class="dot today"></span> اليوم</div>
+    </div>
+    <div class="card">
+      <div class="dayhead"><h2 id="dayTitle"></h2><span id="juz" class="badge"></span></div>
+      <div id="dayDate" class="dateline"></div>
+      <div id="prayer" class="prayer"></div>
+      <div class="stopbox">
+        <div class="stoplabel">📖 موضع التوقف</div>
+        <div id="stopTxt" class="stoptxt"></div>
+        <small id="stopFrom" class="stopfrom"></small>
+        <div class="pick adm">
+          <div class="pk"><span>السورة</span>
+            <div class="stp"><button id="suP">›</button><select id="sura"></select><button id="suN">‹</button></div></div>
+          <div class="pk"><span>الآية <small id="ayaMax"></small></span>
+            <div class="stp"><button id="ay-10">−10</button><button id="ay-1">−</button><input type="number" id="aya" min="1"><button id="ay1">+</button><button id="ay10">+10</button></div></div>
+          <div class="pk"><span>الصفحة</span>
+            <div class="stp"><button id="pg-1">−</button><input type="number" id="pg" min="1" max="604"><button id="pg1">+</button></div>
+            <input type="range" id="pgR" min="1" max="604"></div>
+          <div class="stp quick"><button id="jStart">📍 بداية الجزء</button><button id="jEnd">🏁 أكملنا الجزء</button></div>
+        </div>
+      </div>
+      <div class="add adm">
+        <input id="newName" placeholder="اكتب اسم الطالب ثم اضغط إضافة">
+        <button class="gold" id="addBtn">+ إضافة</button>
+      </div>
+      <div id="list"></div>
+      <div id="summary" class="summary"></div>
+      <div class="summary"><button class="adm" id="allP">✅ تحضير الكل</button><button id="wa">📲 تقرير اليوم</button></div>
+    </div>
   </section>
 
-  <section class="card">
-    <div class="dayhead">
-      <h2 id="dayTitle"></h2>
-      <span id="juz" class="badge"></span>
-    </div>
-    <div class="stopbox">
-      <div class="stoplabel">📖 موضع التوقف</div>
-      <div id="stopTxt" class="stoptxt"></div>
-      <small id="stopFrom" class="stopfrom"></small>
-      <div class="pick adm">
-        <div class="pk"><span>السورة</span>
-          <div class="stp"><button id="suP">›</button><select id="sura"></select><button id="suN">‹</button></div></div>
-        <div class="pk"><span>الآية <small id="ayaMax"></small></span>
-          <div class="stp"><button id="ay-10">−10</button><button id="ay-1">−</button><input type="number" id="aya" min="1"><button id="ay1">+</button><button id="ay10">+10</button></div></div>
-        <div class="pk"><span>الصفحة</span>
-          <div class="stp"><button id="pg-1">−</button><input type="number" id="pg" min="1" max="604"><button id="pg1">+</button></div>
-          <input type="range" id="pgR" min="1" max="604"></div>
-        <div class="stp quick"><button id="jStart">📍 بداية الجزء</button><button id="jEnd">🏁 أكملنا الجزء</button></div>
+  <section class="tabsec" data-t="rank">
+    <div class="card"><h2>🏆 الترتيب</h2><p class="hint" id="hint"></p><div id="rank"></div></div>
+    <div class="card"><h2>🎓 الجوائز والشهادات</h2><div id="awards"></div></div>
+  </section>
+
+  <section class="tabsec" data-t="stats">
+    <div class="card"><h2>📈 منحنى الحضور اليومي</h2><div id="chart"></div></div>
+    <div class="card"><h2>🎯 تحديات الأسابيع</h2><p class="hint">أسبوع بلا غياب = نقاط إضافية لمن حضر أو اعتذر كل أيام الأسبوع.</p><div id="weeks"></div></div>
+  </section>
+
+  <section class="tabsec adm" data-t="admin">
+    <div class="card" id="panel">
+      <h2>⚙ لوحة التحكم</h2>
+      <label class="fld">أول يوم في رمضان: <input type="date" id="start"></label>
+      <div class="cfg">
+        <label>المدينة (بالإنجليزية) <input id="city"></label>
+        <label>الدولة (بالإنجليزية) <input id="country"></label>
+      </div>
+      <p class="hint">نقاط التقييم:</p>
+      <div class="cfg">
+        <label>حاضر <input type="number" id="cp"></label>
+        <label>نصف الدورة <input type="number" id="ch"></label>
+        <label>معتذر <input type="number" id="ce"></label>
+        <label>غائب <input type="number" id="ca"></label>
+        <label>سلوك مقبول <input type="number" id="c1"></label>
+        <label>سلوك جيد <input type="number" id="c2"></label>
+        <label>سلوك ممتاز <input type="number" id="c3"></label>
+        <label>أسبوع بلا غياب <input type="number" id="cw"></label>
+      </div>
+      <div class="tools">
+        <button id="exp">⬇ نسخة احتياطية</button>
+        <label class="btn">⬆ استرجاع<input type="file" id="imp" accept=".json" hidden></label>
+        <button onclick="print()">🖨 طباعة</button>
+        <button id="logout">🚪 خروج</button>
       </div>
     </div>
-    <div class="add adm">
-      <input id="newName" placeholder="اكتب اسم الطالب ثم اضغط إضافة">
-      <button class="gold" id="addBtn">+ إضافة</button>
-    </div>
-    <div id="list"></div>
-    <div id="summary" class="summary"></div>
-    <div class="summary"><button class="adm" id="allP">✅ تحضير الكل</button><button id="wa">📲 تقرير اليوم</button></div>
-  </section>
-
-  <section class="card">
-    <h2>🏆 ترتيب الحضور والسلوك</h2>
-    <p class="hint" id="hint"></p>
-    <div id="rank"></div>
-  </section>
-
-  <section class="card adm" id="panel">
-    <h2>⚙ لوحة التحكم</h2>
-    <label class="fld">أول يوم في رمضان: <input type="date" id="start"></label>
-    <p class="hint">نقاط التقييم:</p>
-    <div class="cfg">
-      <label>حاضر <input type="number" id="cp"></label>
-      <label>نصف الدورة <input type="number" id="ch"></label>
-      <label>معتذر <input type="number" id="ce"></label>
-      <label>غائب <input type="number" id="ca"></label>
-      <label>سلوك مقبول <input type="number" id="c1"></label>
-      <label>سلوك جيد <input type="number" id="c2"></label>
-      <label>سلوك ممتاز <input type="number" id="c3"></label>
-    </div>
-    <div class="tools">
-      <button id="exp">⬇ نسخة احتياطية</button>
-      <label class="btn">⬆ استرجاع<input type="file" id="imp" accept=".json" hidden></label>
-      <button onclick="print()">🖨 طباعة</button>
-      <button class="danger" id="reset">🗑 تصفير كل البيانات</button>
-      <button id="logout">🚪 خروج</button>
+    <div class="card">
+      <h2>🗂 الأرشيف والسنوات</h2>
+      <button class="gold" id="newCircle">＋ بدء حلقة جديدة (حفظ هذه الحلقة في الأرشيف)</button>
+      <div id="arch" style="margin-top:12px"></div>
+      <div class="tools"><button class="danger" id="reset">🗑 تصفير كل البيانات</button></div>
     </div>
   </section>
 </main>
-<footer>تقبّل الله منا ومنكم صالح الأعمال 🤍</footer>
+
+<nav class="tabs">
+  <button data-t="day" class="on"><span>📅</span>اليوم</button>
+  <button data-t="rank"><span>🏆</span>الترتيب</button>
+  <button data-t="stats"><span>📈</span>الإحصاء</button>
+  <button data-t="admin" class="adm"><span>⚙</span>الإدارة</button>
+</nav>
 
 <button id="sndBtn" class="fab" title="الأجواء الصوتية">🔊</button>
 <div id="sndPanel" class="snd" hidden>
@@ -107,6 +133,15 @@
     <div class="row"><button class="gold" id="lgOk" type="button">دخول</button><button type="button" id="lgCancel">إلغاء</button></div>
   </form>
 </dialog>
+<dialog id="logDlg" class="wide">
+  <div id="logBody"></div>
+  <div class="tools"><button id="lgPrint">🖨 طباعة للأهل</button><button id="lgLink" class="adm">🔗 نسخ رابط الأهل</button><button id="lgClose">إغلاق</button></div>
+</dialog>
+<dialog id="arcDlg" class="wide">
+  <div id="arcBody"></div>
+  <div class="tools"><button onclick="document.getElementById('arcDlg').close()">إغلاق</button></div>
+</dialog>
+<footer>تقبّل الله منا ومنكم صالح الأعمال 🤍</footer>
 <script src="app.js"></script>
 </body>
 </html>
